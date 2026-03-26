@@ -1,0 +1,5 @@
+{
+  "name": "Digital Bakir Khata",
+  "description": "A digital ledger application for managing customer dues and transactions with offline-first capabilities.",
+  "requestFramePermissions": []
+}
