@@ -167,7 +167,7 @@ export default function TransactionScreen({
             <span className="text-base text-gray-600 mr-2 font-bold">৳</span>
             <input
               type="number"
-              placeholder="দিলাম/বেচা"
+              placeholder={customer.type === "customer" ? "দিলাম/বেচা" : "দিলাম/পেমেন্ট"}
               value={gave}
               onChange={(e) => setGave(e.target.value)}
               className="border-none outline-none text-lg w-full font-semibold text-gray-800 bg-transparent"
@@ -177,7 +177,7 @@ export default function TransactionScreen({
             <span className="text-base text-gray-600 mr-2 font-bold">৳</span>
             <input
               type="number"
-              placeholder="পেলাম/জমা"
+              placeholder={customer.type === "customer" ? "পেলাম/জমা" : "পেলাম/কেনা"}
               value={got}
               onChange={(e) => setGot(e.target.value)}
               className="border-none outline-none text-lg w-full font-semibold text-gray-800 bg-transparent"

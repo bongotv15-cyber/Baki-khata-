@@ -78,11 +78,11 @@ export default function ShareScreen({
                 <span className="font-semibold">৳ {p}</span>
               </div>
               <div className="flex justify-between text-sm text-[#e11b22] mb-2.5">
-                <span>নতুন দিলাম/বেচা:</span>
+                <span>{currType === "customer" ? "নতুন দিলাম/বেচা:" : "নতুন দিলাম/পেমেন্ট:"}</span>
                 <span className="font-semibold">৳ {ga}</span>
               </div>
               <div className="flex justify-between text-sm text-[#198754] mb-2.5">
-                <span>নতুন জমা/পেলাম:</span>
+                <span>{currType === "customer" ? "নতুন জমা/পেলাম:" : "নতুন কেনা/পেলাম:"}</span>
                 <span className="font-semibold">৳ {go}</span>
               </div>
               <hr className="my-3 border-0 border-t border-dashed border-gray-300" />

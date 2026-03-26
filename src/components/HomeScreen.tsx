@@ -122,7 +122,7 @@ export default function HomeScreen({
 
     const printContent = `<div style="padding:20px; font-family:sans-serif; color:#333; width:100%;">
       <h2 style="text-align:center; color:#8c258d; margin-bottom:5px;">${storeName}</h2>
-      <h4 style="text-align:center; margin-bottom:10px; color:#555;">ডিজিটাল বাকীর খাতা - সম্পূর্ণ তালিকা</h4>
+      <h4 style="text-align:center; margin-bottom:10px; color:#555;">ডিজিটাল হিসাব - সম্পূর্ণ তালিকা</h4>
       <p style="text-align:center; font-size:12px; margin-bottom:20px; color:#777;">তারিখ: ${formatAmountBng(
         now.getDate()
       )}-${formatAmountBng(now.getMonth() + 1)}-${formatAmountBng(
@@ -203,8 +203,8 @@ export default function HomeScreen({
               <h3 className="text-xl font-extrabold tracking-wide drop-shadow-md whitespace-nowrap overflow-hidden text-ellipsis flex items-center gap-1.5">
                 {storeName || "নিজাম ষ্টোর"}
               </h3>
-              <p className="text-[11px] font-medium text-purple-200 uppercase tracking-wider mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
-                ডিজিটাল বাকীর খাতা
+              <p className="text-[10px] font-semibold text-purple-200/90 tracking-widest mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
+                ডিজিটাল হিসাব
               </p>
             </div>
           </div>
@@ -219,7 +219,7 @@ export default function HomeScreen({
       </header>
 
       <div
-        className={`relative -mt-5 bg-white rounded-t-3xl px-4 pt-6 flex-1 flex flex-col overflow-hidden z-10 transition-all duration-300`}
+        className={`relative -mt-5 bg-[#f9f9f9] rounded-t-3xl px-4 pt-6 flex-1 flex flex-col overflow-hidden z-10 transition-all duration-300`}
       >
         <div
           className={`shrink-0 transition-all duration-500 ease-in-out overflow-hidden ${
@@ -285,7 +285,7 @@ export default function HomeScreen({
             <div className="absolute left-1/2 top-2 bottom-2 w-px bg-gray-200 -translate-x-1/2"></div>
             <div className="flex-1 min-w-0 text-center p-2 break-words">
               <div className="text-xl font-bold text-[#8c258d] mb-1">
-                ৳ {formatAmountBng(totalDue)}
+                {formatAmountBng(totalDue)}
               </div>
               <div className="text-[11px] text-gray-500 font-semibold">
                 মোট বাকি পাবো
@@ -293,7 +293,7 @@ export default function HomeScreen({
             </div>
             <div className="flex-1 min-w-0 text-center p-2 break-words">
               <div className="text-xl font-bold text-[#e11b22] mb-1">
-                ৳ {formatAmountBng(totalGive)}
+                {formatAmountBng(totalGive)}
               </div>
               <div className="text-[11px] text-gray-500 font-semibold">
                 মোট দিবো
@@ -357,29 +357,31 @@ export default function HomeScreen({
             {displayList.slice(0, renderCount).map((c) => (
               <div
                 key={c.id}
-                className="flex justify-between items-center py-3 cursor-pointer transition-transform active:scale-95"
+                className="flex justify-between items-center py-3.5 border-b border-gray-200/60 last:border-0 cursor-pointer transition-transform active:scale-95"
                 onClick={() => onOpenTransaction(c.id)}
               >
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className="w-10 h-10 min-w-10 bg-gray-100 text-[#8c258d] rounded-full flex justify-center items-center font-bold text-base uppercase">
+                <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                  <div className="w-11 h-11 min-w-[44px] bg-purple-50 text-[#8c258d] rounded-full flex justify-center items-center font-bold text-lg uppercase border border-purple-100">
                     {c.name.charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-[15px] text-gray-800 whitespace-nowrap overflow-hidden text-ellipsis">
+                    <h4 className="text-base font-bold text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis tracking-tight">
                       {c.name}
                     </h4>
-                    <p className="text-[11px] text-gray-500 mt-0.5">{c.phone}</p>
+                    <p className="text-xs text-gray-500 mt-0.5 font-medium">{c.phone}</p>
                   </div>
                 </div>
-                <div className="text-right ml-2.5 whitespace-nowrap">
+                <div className="text-right ml-3 whitespace-nowrap">
                   <div
-                    className={`text-[15px] font-bold ${
+                    className={`text-base font-bold tracking-tight ${
                       c.type === "supplier" ? "text-[#e11b22]" : "text-[#8c258d]"
                     }`}
                   >
                     ৳ {formatAmountBng(c.amount || 0)}
                   </div>
-                  <div className="text-[10px] text-gray-500 mt-0.5">
+                  <div className={`text-[11px] font-semibold mt-0.5 ${
+                    c.type === "supplier" ? "text-red-400" : "text-purple-400"
+                  }`}>
                     {c.type === "supplier" ? "দিবো" : "বাকি"}
                   </div>
                 </div>
@@ -390,30 +392,30 @@ export default function HomeScreen({
         </div>
       </div>
 
-      <div className="bg-white flex justify-around py-2.5 border-t border-gray-100 items-center relative z-[100] shrink-0">
+      <div className="bg-white flex justify-around py-3 border-t border-gray-200 items-center relative z-[100] shrink-0 shadow-[0_-4px_20px_rgba(0,0,0,0.04)] rounded-t-2xl">
         <div
-          className="flex flex-col items-center text-xs text-[#8c258d] cursor-pointer gap-1"
+          className="flex flex-col items-center text-xs text-[#8c258d] cursor-pointer gap-1 px-4 py-1 rounded-xl hover:bg-purple-50 transition-colors"
           onClick={() => {
             const list = document.getElementById("customerList");
             if (list) list.scrollTop = 0;
           }}
         >
-          <Home className="w-[18px] h-[18px]" />
-          Home
+          <Home className="w-6 h-6" />
+          <span className="font-bold">হোম</span>
         </div>
         <div
-          className="bg-[#8c258d] w-[60px] h-[60px] min-w-[60px] rounded-full flex justify-center items-center text-white border-[5px] border-white -mt-9 shadow-md cursor-pointer transition-transform active:scale-95"
+          className="bg-[#8c258d] w-14 h-14 min-w-[56px] rounded-full flex justify-center items-center text-white border-[4px] border-[#f9f9f9] -mt-8 shadow-lg cursor-pointer transition-transform active:scale-95 hover:bg-[#7a1f7a]"
           title="নতুন যোগ করুন"
           onClick={onOpenAdd}
         >
-          <Plus className="w-6 h-6" />
+          <Plus className="w-7 h-7" />
         </div>
         <div
-          className="flex flex-col items-center text-xs text-[#8c258d] cursor-pointer gap-1"
+          className="flex flex-col items-center text-xs text-gray-400 cursor-pointer gap-1 px-4 py-1 rounded-xl hover:bg-gray-100 transition-colors"
           onClick={onOpenSettings}
         >
-          <Settings className="w-[18px] h-[18px]" />
-          Settings
+          <Settings className="w-6 h-6" />
+          <span className="font-medium">সেটিংস</span>
         </div>
       </div>
 
