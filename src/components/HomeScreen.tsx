@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from "react";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import {
   Store,
   Check,
@@ -14,6 +16,7 @@ import {
   Plus,
   AlertTriangle,
   RefreshCw,
+  ChevronRight,
 } from "lucide-react";
 import { Customer } from "../types";
 import { formatAmountBng } from "../lib/utils";
@@ -29,6 +32,42 @@ interface HomeScreenProps {
   onOpenSettings: () => void;
   onSyncNow: () => void;
 }
+
+const bngDigits: Record<string, string> = {
+  "0": "০", "1": "১", "2": "২", "3": "৩", "4": "৪",
+  "5": "৫", "6": "৬", "7": "৭", "8": "৮", "9": "৯",
+};
+
+const formatDaysBng = (days: number) => {
+  return days.toString().replace(/[0-9]/g, (w) => bngDigits[w] || w);
+};
+
+const getInitials = (name: string) => {
+  const parts = name.trim().split(/[\s/]+/);
+  if (parts.length >= 2) {
+    return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+  }
+  return name.substring(0, 2).toUpperCase();
+};
+
+const avatarColors = [
+  "bg-red-100 text-red-800",
+  "bg-green-100 text-green-800",
+  "bg-yellow-100 text-yellow-800",
+  "bg-blue-100 text-blue-800",
+  "bg-purple-100 text-purple-800",
+  "bg-pink-100 text-pink-800",
+  "bg-indigo-100 text-indigo-800",
+];
+
+const getAvatarColor = (id: string) => {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = id.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % avatarColors.length;
+  return avatarColors[index];
+};
 
 export default function HomeScreen({
   storeName,
@@ -104,50 +143,78 @@ export default function HomeScreen({
     setHideUI(false);
   };
 
-  const handleDownloadPDF = () => {
-    toast.info("পিডিএফ তৈরি হচ্ছে...");
+  const handleDownloadPDF = async () => {
+    toast.info("পিডিএফ তৈরি হচ্ছে, দয়া করে অপেক্ষা করুন...");
+    
+    // Create a hidden div to render the PDF content
+    const div = document.createElement("div");
+    div.style.position = "absolute";
+    div.style.left = "-9999px";
+    div.style.top = "-9999px";
+    div.style.width = "800px"; // Fixed width for consistent rendering
+    div.style.backgroundColor = "white";
+    div.style.padding = "40px";
+    div.style.fontFamily = "sans-serif";
+    
     let trs = "";
     const now = new Date();
     displayList.forEach((c) => {
       const color = c.type === "supplier" ? "color:#e11b22;" : "color:#8c258d;";
       const lbl = c.type === "supplier" ? "দিবো" : "বাকি";
-      trs += `<tr><td style="padding:10px; border:1px solid #ddd;">${
-        c.name
-      }</td><td style="padding:10px; border:1px solid #ddd;">${
-        c.phone
-      }</td><td style="padding:10px; border:1px solid #ddd; text-align:right; font-weight:bold; ${color}">${formatAmountBng(
-        c.amount || 0
-      )}</td><td style="padding:10px; border:1px solid #ddd; text-align:center;">${lbl}</td></tr>`;
+      trs += `<tr>
+        <td style="padding:12px; border:1px solid #ddd;">${c.name}</td>
+        <td style="padding:12px; border:1px solid #ddd;">${c.phone || '-'}</td>
+        <td style="padding:12px; border:1px solid #ddd; text-align:right; font-weight:bold; ${color}">${formatAmountBng(c.amount || 0)}</td>
+        <td style="padding:12px; border:1px solid #ddd; text-align:center;">${lbl}</td>
+      </tr>`;
     });
 
-    const printContent = `<div style="padding:20px; font-family:sans-serif; color:#333; width:100%;">
-      <h2 style="text-align:center; color:#8c258d; margin-bottom:5px;">${storeName}</h2>
-      <h4 style="text-align:center; margin-bottom:10px; color:#555;">ডিজিটাল হিসাব - সম্পূর্ণ তালিকা</h4>
-      <p style="text-align:center; font-size:12px; margin-bottom:20px; color:#777;">তারিখ: ${formatAmountBng(
-        now.getDate()
-      )}-${formatAmountBng(now.getMonth() + 1)}-${formatAmountBng(
-      now.getFullYear()
-    )}</p>
-      <table style="width:100%; border-collapse:collapse; font-size:14px;">
+    div.innerHTML = `
+      <h2 style="text-align:center; color:#8c258d; margin-bottom:5px; font-size: 28px;">${storeName || "নিজাম ষ্টোর"}</h2>
+      <h4 style="text-align:center; margin-bottom:10px; color:#555; font-size: 20px;">ডিজিটাল হিসাব - সম্পূর্ণ তালিকা</h4>
+      <p style="text-align:center; font-size:16px; margin-bottom:20px; color:#777;">তারিখ: ${formatAmountBng(now.getDate())}-${formatAmountBng(now.getMonth() + 1)}-${formatAmountBng(now.getFullYear())}</p>
+      <table style="width:100%; border-collapse:collapse; font-size:18px;">
         <tr style="background-color:#f4f4f4;">
-          <th style="padding:12px; text-align:left; border:1px solid #ddd;">নাম</th>
-          <th style="padding:12px; text-align:left; border:1px solid #ddd;">নম্বর</th>
-          <th style="padding:12px; text-align:right; border:1px solid #ddd;">পরিমাণ</th>
-          <th style="padding:12px; text-align:center; border:1px solid #ddd;">ধরণ</th>
+          <th style="padding:14px; text-align:left; border:1px solid #ddd;">নাম</th>
+          <th style="padding:14px; text-align:left; border:1px solid #ddd;">নম্বর</th>
+          <th style="padding:14px; text-align:right; border:1px solid #ddd;">পরিমাণ</th>
+          <th style="padding:14px; text-align:center; border:1px solid #ddd;">ধরণ</th>
         </tr>
         ${trs}
       </table>
-    </div>`;
+    `;
+    
+    document.body.appendChild(div);
+    
+    try {
+      const canvas = await html2canvas(div, { scale: 2, useCORS: true });
+      const imgData = canvas.toDataURL('image/png');
+      
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      let heightLeft = imgHeight;
+      let position = 0;
 
-    const printWindow = window.open("", "_blank");
-    if (printWindow) {
-      printWindow.document.write(printContent);
-      printWindow.document.close();
-      printWindow.focus();
-      setTimeout(() => {
-        printWindow.print();
-        printWindow.close();
-      }, 300);
+      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+      heightLeft -= pdfHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+        heightLeft -= pdfHeight;
+      }
+      
+      pdf.save(`Digital_Hisab_${now.getTime()}.pdf`);
+      toast.success("পিডিএফ ডাউনলোড সফল হয়েছে!");
+    } catch (err) {
+      console.error(err);
+      toast.error("পিডিএফ তৈরি করতে সমস্যা হয়েছে!");
+    } finally {
+      document.body.removeChild(div);
     }
   };
 
@@ -219,7 +286,7 @@ export default function HomeScreen({
       </header>
 
       <div
-        className={`relative -mt-5 bg-[#f9f9f9] rounded-t-3xl px-4 pt-6 flex-1 flex flex-col overflow-hidden z-10 transition-all duration-300`}
+        className={`relative -mt-5 bg-white rounded-t-3xl px-4 pt-6 flex-1 flex flex-col overflow-hidden z-10 transition-all duration-300`}
       >
         <div
           className={`shrink-0 transition-all duration-500 ease-in-out overflow-hidden ${
@@ -354,45 +421,46 @@ export default function HomeScreen({
 
         <div className="flex-1 overflow-y-auto -mx-4 px-4 pb-5" id="customerList">
           <div className="flex flex-col">
-            {displayList.slice(0, renderCount).map((c) => (
-              <div
-                key={c.id}
-                className="flex justify-between items-center py-3.5 border-b border-gray-200/60 last:border-0 cursor-pointer transition-transform active:scale-95"
-                onClick={() => onOpenTransaction(c.id)}
-              >
-                <div className="flex items-center gap-3.5 flex-1 min-w-0">
-                  <div className="w-11 h-11 min-w-[44px] bg-purple-50 text-[#8c258d] rounded-full flex justify-center items-center font-bold text-lg uppercase border border-purple-100">
-                    {c.name.charAt(0)}
+            {displayList.slice(0, renderCount).map((c) => {
+              const daysAgo = Math.floor((Date.now() - c.updatedAt) / (1000 * 60 * 60 * 24));
+              const isZero = !c.amount || c.amount === 0;
+              
+              return (
+                <div
+                  key={c.id}
+                  className="flex justify-between items-center py-4 border-b border-gray-100 last:border-0 cursor-pointer transition-colors active:bg-gray-50"
+                  onClick={() => onOpenTransaction(c.id)}
+                >
+                  <div className="flex items-center gap-4 flex-1 min-w-0">
+                    <div className={`w-12 h-12 min-w-[48px] rounded-full flex justify-center items-center font-medium text-lg ${getAvatarColor(c.id)}`}>
+                      {getInitials(c.name)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-[17px] font-bold text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis">
+                        {c.name}
+                      </h4>
+                      <p className="text-[13px] text-gray-500 mt-0.5">{formatDaysBng(daysAgo)} দিন</p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="text-base font-bold text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis tracking-tight">
-                      {c.name}
-                    </h4>
-                    <p className="text-xs text-gray-500 mt-0.5 font-medium">{c.phone}</p>
+                  <div className="flex items-center gap-2 ml-3 whitespace-nowrap">
+                    <div
+                      className={`text-[17px] font-medium ${
+                        isZero ? "text-gray-800" : "text-[#d32f2f]"
+                      }`}
+                    >
+                      {formatAmountBng(c.amount || 0)}
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-gray-900" strokeWidth={2.5} />
                   </div>
                 </div>
-                <div className="text-right ml-3 whitespace-nowrap">
-                  <div
-                    className={`text-base font-bold tracking-tight ${
-                      c.type === "supplier" ? "text-[#e11b22]" : "text-[#8c258d]"
-                    }`}
-                  >
-                    ৳ {formatAmountBng(c.amount || 0)}
-                  </div>
-                  <div className={`text-[11px] font-semibold mt-0.5 ${
-                    c.type === "supplier" ? "text-red-400" : "text-purple-400"
-                  }`}>
-                    {c.type === "supplier" ? "দিবো" : "বাকি"}
-                  </div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
           <div ref={observerTarget} className="h-5 w-full"></div>
         </div>
       </div>
 
-      <div className="bg-white flex justify-around py-3 border-t border-gray-200 items-center relative z-[100] shrink-0 shadow-[0_-4px_20px_rgba(0,0,0,0.04)] rounded-t-2xl">
+      <div className={`bg-white justify-around py-3 border-t border-gray-200 items-center relative z-[100] shrink-0 shadow-[0_-4px_20px_rgba(0,0,0,0.04)] rounded-t-2xl ${hideUI ? "hidden" : "flex"}`}>
         <div
           className="flex flex-col items-center text-xs text-[#8c258d] cursor-pointer gap-1 px-4 py-1 rounded-xl hover:bg-purple-50 transition-colors"
           onClick={() => {

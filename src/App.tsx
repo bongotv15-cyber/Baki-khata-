@@ -229,15 +229,10 @@ export default function App() {
           <ReportScreen
             customer={activeCustomer}
             onBack={() => setScreen("transaction")}
-            onTagada={() => {
-              setShareData({
-                mode: "tagada",
-                name: activeCustomer.name,
-                phone: activeCustomer.phone,
-                currBal: activeCustomer.amount,
-                currType: activeCustomer.type,
-              });
-              setScreen("share");
+            onUpdateCustomer={async (updatedCustomer) => {
+              await syncEngine?.mutate("SET", updatedCustomer.id, updatedCustomer);
+              setActiveCustomer(updatedCustomer);
+              toast.success("আপডেট সফল হয়েছে!");
             }}
           />
         )}
