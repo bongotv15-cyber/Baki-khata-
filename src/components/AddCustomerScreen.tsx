@@ -97,7 +97,7 @@ export default function AddCustomerScreen({
 
   return (
     <div className="flex flex-col h-full w-full bg-white relative">
-      <div className="flex items-center px-4 py-5 text-xl font-semibold bg-[#8c258d] text-white shadow-sm shrink-0">
+      <div className="flex items-center px-4 py-5 text-xl font-semibold bg-[#0F7A6B] text-white shadow-sm shrink-0">
         <span className="text-2xl mr-4 cursor-pointer flex items-center" onClick={onBack}>
           <ArrowLeft className="w-6 h-6" />
         </span>
@@ -105,7 +105,7 @@ export default function AddCustomerScreen({
       </div>
 
       <div className="flex-1 overflow-y-auto px-5 py-8 flex flex-col">
-        <div className="text-[50px] mb-4 text-[#8c258d] flex justify-center">
+        <div className="text-[50px] mb-4 text-[#0F7A6B] flex justify-center">
           <Users className="w-16 h-16" />
         </div>
         <div className="text-2xl font-bold text-gray-800 text-center mb-8">
@@ -120,7 +120,7 @@ export default function AddCustomerScreen({
               value="customer"
               checked={type === "customer"}
               onChange={() => setType("customer")}
-              className="accent-[#8c258d] w-4 h-4"
+              className="accent-[#0F7A6B] w-4 h-4"
             />{" "}
             কাস্টমার
           </label>
@@ -131,7 +131,7 @@ export default function AddCustomerScreen({
               value="supplier"
               checked={type === "supplier"}
               onChange={() => setType("supplier")}
-              className="accent-[#8c258d] w-4 h-4"
+              className="accent-[#0F7A6B] w-4 h-4"
             />{" "}
             সাপ্লায়ার
           </label>
@@ -145,13 +145,13 @@ export default function AddCustomerScreen({
               placeholder="নাম লিখুন"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full p-4 rounded-xl border border-gray-200 text-base outline-none transition-colors focus:border-[#8c258d] bg-gray-50 focus:bg-white"
+              className="w-full p-4 rounded-xl border border-gray-200 text-base outline-none transition-colors focus:border-[#0F7A6B] bg-gray-50 focus:bg-white"
             />
           </div>
 
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1.5 ml-1">মোবাইল নম্বর (ঐচ্ছিক)</label>
-            <div className="flex border border-gray-200 rounded-xl overflow-hidden transition-colors focus-within:border-[#8c258d] bg-gray-50 focus-within:bg-white">
+            <div className="flex border border-gray-200 rounded-xl overflow-hidden transition-colors focus-within:border-[#0F7A6B] bg-gray-50 focus-within:bg-white">
               <div className="bg-gray-100 p-4 font-semibold border-r border-gray-200 flex items-center text-gray-600">
                 +880
               </div>
@@ -165,7 +165,7 @@ export default function AddCustomerScreen({
               {'contacts' in navigator && 'ContactsManager' in window && (
                 <button
                   onClick={handleContactPick}
-                  className="bg-purple-50 px-5 flex items-center justify-center text-[#8c258d] border-l border-gray-200 hover:bg-purple-100 transition-colors"
+                  className="bg-teal-50 px-5 flex items-center justify-center text-[#0F7A6B] border-l border-gray-200 hover:bg-teal-100 transition-colors"
                   title="ফোনবুক থেকে নিন"
                 >
                   <BookUser className="w-6 h-6" />
@@ -177,7 +177,7 @@ export default function AddCustomerScreen({
 
         <div className="mt-8 pb-6">
           <button
-            className="w-full p-4 border-none rounded-xl bg-[#8c258d] text-white text-lg font-bold cursor-pointer active:bg-[#6a1a6a] transition-colors shadow-md hover:shadow-lg"
+            className="w-full p-4 border-none rounded-xl bg-[#0F7A6B] text-white text-lg font-bold cursor-pointer active:bg-[#0A5C50] transition-colors shadow-md hover:shadow-lg"
             onClick={handleSave}
           >
             সংরক্ষণ করুন

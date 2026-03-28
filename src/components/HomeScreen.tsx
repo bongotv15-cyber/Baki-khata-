@@ -17,6 +17,7 @@ import {
   AlertTriangle,
   RefreshCw,
   ChevronRight,
+  LogOut,
 } from "lucide-react";
 import { Customer } from "../types";
 import { formatAmountBng } from "../lib/utils";
@@ -55,7 +56,7 @@ const avatarColors = [
   "bg-green-100 text-green-800",
   "bg-yellow-100 text-yellow-800",
   "bg-blue-100 text-blue-800",
-  "bg-purple-100 text-purple-800",
+  "bg-teal-100 text-teal-800",
   "bg-pink-100 text-pink-800",
   "bg-indigo-100 text-indigo-800",
 ];
@@ -84,17 +85,29 @@ export default function HomeScreen({
   const [sort, setSort] = useState<"new" | "old" | "low" | "high">("new");
   const [hideUI, setHideUI] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   const [displayList, setDisplayList] = useState<Customer[]>([]);
   const [renderCount, setRenderCount] = useState(50);
   const observerTarget = useRef(null);
 
-  const totalDue = customers
-    .filter((c) => c.type === "customer")
-    .reduce((acc, c) => acc + (c.amount || 0), 0);
-  const totalGive = customers
-    .filter((c) => c.type === "supplier")
-    .reduce((acc, c) => acc + (c.amount || 0), 0);
+  const searchedCustomers = customers.filter((c) => {
+    return c.name.toLowerCase().includes(search.toLowerCase()) ||
+      (c.phone && c.phone.includes(search));
+  });
+  const totalCount = searchedCustomers.length;
+  const customerCount = searchedCustomers.filter(c => c.type === "customer").length;
+  const supplierCount = searchedCustomers.filter(c => c.type === "supplier").length;
+
+  const totalCustomerBalance = customers.reduce((acc, c) => {
+    if (c.type === "customer") return acc + (c.amount || 0);
+    return acc;
+  }, 0);
+
+  const totalSupplierBalance = customers.reduce((acc, c) => {
+    if (c.type === "supplier") return acc + (c.amount || 0);
+    return acc;
+  }, 0);
 
   useEffect(() => {
     let list = customers.filter((c) => {
@@ -159,18 +172,19 @@ export default function HomeScreen({
     let trs = "";
     const now = new Date();
     displayList.forEach((c) => {
-      const color = c.type === "supplier" ? "color:#e11b22;" : "color:#8c258d;";
-      const lbl = c.type === "supplier" ? "দিবো" : "বাকি";
+      const isNegative = (c.amount || 0) < 0;
+      const color = isNegative ? "color:#198754;" : (c.type === "supplier" ? "color:#e11b22;" : "color:#0F7A6B;");
+      const lbl = isNegative ? "জমা" : (c.type === "supplier" ? "দিবো" : "বাকি");
       trs += `<tr>
         <td style="padding:12px; border:1px solid #ddd;">${c.name}</td>
         <td style="padding:12px; border:1px solid #ddd;">${c.phone || '-'}</td>
-        <td style="padding:12px; border:1px solid #ddd; text-align:right; font-weight:bold; ${color}">${formatAmountBng(c.amount || 0)}</td>
+        <td style="padding:12px; border:1px solid #ddd; text-align:right; font-weight:bold; ${color}">${formatAmountBng(Math.abs(c.amount || 0))}</td>
         <td style="padding:12px; border:1px solid #ddd; text-align:center;">${lbl}</td>
       </tr>`;
     });
 
     div.innerHTML = `
-      <h2 style="text-align:center; color:#8c258d; margin-bottom:5px; font-size: 28px;">${storeName || "নিজাম ষ্টোর"}</h2>
+      <h2 style="text-align:center; color:#0F7A6B; margin-bottom:5px; font-size: 28px;">${storeName || "নিজাম ষ্টোর"}</h2>
       <h4 style="text-align:center; margin-bottom:10px; color:#555; font-size: 20px;">ডিজিটাল হিসাব - সম্পূর্ণ তালিকা</h4>
       <p style="text-align:center; font-size:16px; margin-bottom:20px; color:#777;">তারিখ: ${formatAmountBng(now.getDate())}-${formatAmountBng(now.getMonth() + 1)}-${formatAmountBng(now.getFullYear())}</p>
       <table style="width:100%; border-collapse:collapse; font-size:18px;">
@@ -257,20 +271,20 @@ export default function HomeScreen({
   return (
     <div className="flex flex-col h-full w-full bg-gray-100 overflow-hidden relative">
       <header
-        className={`bg-[#8c258d] text-white px-4 pt-5 pb-9 shrink-0 transition-all duration-300 ${
+        className={`bg-[#0F7A6B] text-white px-4 pt-5 pb-9 shrink-0 transition-all duration-300 ${
           hideUI ? "pb-9" : ""
         }`}
       >
         <div className="flex items-center justify-between mb-0 transition-all duration-300">
           <div className="flex items-center gap-3 flex-1 min-w-0">
-            <div className="w-12 h-12 min-w-[48px] bg-gradient-to-br from-white to-purple-100 text-[#8c258d] rounded-full border-2 border-white/90 shadow-md flex justify-center items-center">
+            <div className="w-12 h-12 min-w-[48px] bg-gradient-to-br from-white to-teal-100 text-[#0F7A6B] rounded-full border-2 border-white/90 shadow-md flex justify-center items-center">
               <Store className="w-6 h-6 drop-shadow-sm" />
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="text-xl font-extrabold tracking-wide drop-shadow-md whitespace-nowrap overflow-hidden text-ellipsis flex items-center gap-1.5">
                 {storeName || "নিজাম ষ্টোর"}
               </h3>
-              <p className="text-[10px] font-semibold text-purple-200/90 tracking-widest mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
+              <p className="text-[10px] font-semibold text-teal-200/90 tracking-widest mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
                 ডিজিটাল হিসাব
               </p>
             </div>
@@ -279,7 +293,7 @@ export default function HomeScreen({
             {getSyncStatusUI()}
             <Settings
               className="w-6 h-6 cursor-pointer"
-              onClick={onOpenSettings}
+              onClick={() => setShowSettingsModal(true)}
             />
           </div>
         </div>
@@ -298,7 +312,7 @@ export default function HomeScreen({
               className="flex flex-col items-center text-gray-700 cursor-pointer active:scale-95 transition-transform"
               onClick={onOpenAdd}
             >
-              <div className="text-[#8c258d] h-10 flex justify-center items-center mb-1">
+              <div className="text-[#0F7A6B] h-10 flex justify-center items-center mb-1">
                 <UserPlus className="w-8 h-8" />
               </div>
               <p className="text-[11px] font-semibold text-center leading-tight whitespace-nowrap">
@@ -311,7 +325,7 @@ export default function HomeScreen({
               className="flex flex-col items-center text-gray-700 cursor-pointer active:scale-95 transition-transform"
               onClick={() => document.getElementById("searchInput")?.focus()}
             >
-              <div className="text-[#8c258d] h-10 flex justify-center items-center mb-1">
+              <div className="text-[#0F7A6B] h-10 flex justify-center items-center mb-1">
                 <BookOpen className="w-8 h-8" />
               </div>
               <p className="text-[11px] font-semibold text-center leading-tight whitespace-nowrap">
@@ -324,7 +338,7 @@ export default function HomeScreen({
               className="flex flex-col items-center text-gray-700 cursor-pointer active:scale-95 transition-transform"
               onClick={() => toast.info("লেনদেন যোগ অপশনটি শীঘ্রই আসছে!")}
             >
-              <div className="text-[#8c258d] h-10 flex justify-center items-center mb-1">
+              <div className="text-[#0F7A6B] h-10 flex justify-center items-center mb-1">
                 <FileText className="w-8 h-8" />
               </div>
               <p className="text-[11px] font-semibold text-center leading-tight whitespace-nowrap">
@@ -337,7 +351,7 @@ export default function HomeScreen({
               className="flex flex-col items-center text-gray-700 cursor-pointer active:scale-95 transition-transform"
               onClick={() => toast.info("আজকের হিসাব অপশনটি শীঘ্রই আসছে!")}
             >
-              <div className="text-[#8c258d] h-10 flex justify-center items-center mb-1">
+              <div className="text-[#0F7A6B] h-10 flex justify-center items-center mb-1">
                 <Calendar className="w-8 h-8" />
               </div>
               <p className="text-[11px] font-semibold text-center leading-tight whitespace-nowrap">
@@ -351,19 +365,19 @@ export default function HomeScreen({
           <div className="flex justify-between gap-4 mb-5 px-1 relative">
             <div className="absolute left-1/2 top-2 bottom-2 w-px bg-gray-200 -translate-x-1/2"></div>
             <div className="flex-1 min-w-0 text-center p-2 break-words">
-              <div className="text-xl font-bold text-[#8c258d] mb-1">
-                {formatAmountBng(totalDue)}
+              <div className="text-xl font-bold text-[#0F7A6B] mb-1">
+                {formatAmountBng(Math.abs(totalCustomerBalance))}
               </div>
               <div className="text-[11px] text-gray-500 font-semibold">
-                মোট বাকি পাবো
+                {totalCustomerBalance >= 0 ? "মোট কাস্টমার (পাবো)" : "মোট কাস্টমার (দিবো)"}
               </div>
             </div>
             <div className="flex-1 min-w-0 text-center p-2 break-words">
               <div className="text-xl font-bold text-[#e11b22] mb-1">
-                {formatAmountBng(totalGive)}
+                {formatAmountBng(Math.abs(totalSupplierBalance))}
               </div>
               <div className="text-[11px] text-gray-500 font-semibold">
-                মোট দিবো
+                {totalSupplierBalance >= 0 ? "মোট সাপ্লায়ার (দিবো)" : "মোট সাপ্লায়ার (পাবো)"}
               </div>
             </div>
           </div>
@@ -378,7 +392,7 @@ export default function HomeScreen({
               value={search}
               onFocus={() => setHideUI(true)}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full p-2.5 border border-gray-200 rounded-xl text-sm outline-none transition-colors focus:border-[#8c258d] focus:bg-white bg-gray-50"
+              className="w-full p-2.5 border border-gray-200 rounded-xl text-sm outline-none transition-colors focus:border-[#0F7A6B] focus:bg-white bg-gray-50"
             />
           </div>
           <div
@@ -388,14 +402,14 @@ export default function HomeScreen({
           >
             <button
               onClick={() => setShowFilterModal(true)}
-              className="bg-gray-100 w-10 h-10 rounded-xl flex justify-center items-center text-[#8c258d] cursor-pointer transition-colors border border-gray-200 shrink-0"
+              className="bg-gray-100 w-10 h-10 rounded-xl flex justify-center items-center text-[#0F7A6B] cursor-pointer transition-colors border border-gray-200 shrink-0"
               title="ফিল্টার ও সর্ট"
             >
               <Filter className="w-5 h-5" />
             </button>
             <button
               onClick={handleDownloadPDF}
-              className="bg-gray-100 w-10 h-10 rounded-xl flex justify-center items-center text-[#8c258d] cursor-pointer transition-colors border border-gray-200 shrink-0"
+              className="bg-gray-100 w-10 h-10 rounded-xl flex justify-center items-center text-[#0F7A6B] cursor-pointer transition-colors border border-gray-200 shrink-0"
               title="পিডিএফ ডাউনলোড"
             >
               <Download className="w-5 h-5" />
@@ -415,8 +429,33 @@ export default function HomeScreen({
           </div>
         </div>
 
-        <div className="text-[11px] text-gray-500 mb-4 pl-0.5 font-semibold shrink-0">
-          দেখাচ্ছে: {formatAmountBng(displayList.length).split(".")[0]} জন
+        <div className="flex items-center gap-2.5 mb-4 px-1 shrink-0 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <button
+            onClick={() => setFilter("all")}
+            className={`px-3 py-1.5 rounded-lg text-[12px] font-bold whitespace-nowrap transition-colors border ${
+              filter === "all" ? "bg-gray-800 text-white border-gray-800" : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+            }`}
+          >
+            সব ({formatAmountBng(totalCount).split(".")[0]})
+          </button>
+          <button
+            onClick={() => setFilter("customer")}
+            className={`px-3 py-1.5 rounded-lg text-[12px] font-bold whitespace-nowrap transition-colors border flex items-center gap-1.5 ${
+              filter === "customer" ? "bg-[#0F7A6B] text-white border-[#0F7A6B]" : "bg-white text-[#0F7A6B] border-gray-200 hover:bg-teal-50"
+            }`}
+          >
+            <div className={`w-1.5 h-1.5 rounded-full ${filter === "customer" ? "bg-white" : "bg-[#0F7A6B]"}`}></div>
+            কাস্টমার: {formatAmountBng(customerCount).split(".")[0]}
+          </button>
+          <button
+            onClick={() => setFilter("supplier")}
+            className={`px-3 py-1.5 rounded-lg text-[12px] font-bold whitespace-nowrap transition-colors border flex items-center gap-1.5 ${
+              filter === "supplier" ? "bg-[#e11b22] text-white border-[#e11b22]" : "bg-white text-[#e11b22] border-gray-200 hover:bg-red-50"
+            }`}
+          >
+            <div className={`w-1.5 h-1.5 rounded-full ${filter === "supplier" ? "bg-white" : "bg-[#e11b22]"}`}></div>
+            সাপ্লায়ার: {formatAmountBng(supplierCount).split(".")[0]}
+          </button>
         </div>
 
         <div className="flex-1 overflow-y-auto -mx-4 px-4 pb-5" id="customerList">
@@ -439,16 +478,35 @@ export default function HomeScreen({
                       <h4 className="text-[17px] font-bold text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis">
                         {c.name}
                       </h4>
-                      <p className="text-[13px] text-gray-500 mt-0.5">{formatDaysBng(daysAgo)} দিন</p>
+                      <p className="text-[12px] text-gray-500 mt-0.5 flex items-center gap-1.5">
+                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${c.type === "customer" ? "bg-teal-50 text-[#0F7A6B]" : "bg-red-50 text-[#e11b22]"}`}>
+                          {c.type === "customer" ? "কাস্টমার" : "সাপ্লায়ার"}
+                        </span>
+                        <span>•</span>
+                        <span>{formatDaysBng(daysAgo)} দিন</span>
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 ml-3 whitespace-nowrap">
-                    <div
-                      className={`text-[17px] font-medium ${
-                        isZero ? "text-gray-800" : "text-[#d32f2f]"
-                      }`}
-                    >
-                      {formatAmountBng(c.amount || 0)}
+                    <div className="flex flex-col items-end">
+                      <div
+                        className={`text-[18px] font-extrabold ${
+                          isZero 
+                            ? "text-gray-800" 
+                            : c.type === "customer"
+                              ? ((c.amount || 0) >= 0 ? "text-[#0F7A6B]" : "text-[#e11b22]")
+                              : ((c.amount || 0) >= 0 ? "text-[#e11b22]" : "text-[#0F7A6B]")
+                        }`}
+                      >
+                        {formatAmountBng(Math.abs(c.amount || 0))}
+                      </div>
+                      {!isZero && (
+                        <div className="text-[11px] text-gray-500 font-bold">
+                          {c.type === "customer"
+                            ? ((c.amount || 0) >= 0 ? "পাবো" : "দিবো")
+                            : ((c.amount || 0) >= 0 ? "দিবো" : "পাবো")}
+                        </div>
+                      )}
                     </div>
                     <ChevronRight className="w-5 h-5 text-gray-900" strokeWidth={2.5} />
                   </div>
@@ -462,7 +520,7 @@ export default function HomeScreen({
 
       <div className={`bg-white justify-around py-3 border-t border-gray-200 items-center relative z-[100] shrink-0 shadow-[0_-4px_20px_rgba(0,0,0,0.04)] rounded-t-2xl ${hideUI ? "hidden" : "flex"}`}>
         <div
-          className="flex flex-col items-center text-xs text-[#8c258d] cursor-pointer gap-1 px-4 py-1 rounded-xl hover:bg-purple-50 transition-colors"
+          className="flex flex-col items-center text-xs text-[#0F7A6B] cursor-pointer gap-1 px-4 py-1 rounded-xl hover:bg-teal-50 transition-colors"
           onClick={() => {
             const list = document.getElementById("customerList");
             if (list) list.scrollTop = 0;
@@ -472,7 +530,7 @@ export default function HomeScreen({
           <span className="font-bold">হোম</span>
         </div>
         <div
-          className="bg-[#8c258d] w-14 h-14 min-w-[56px] rounded-full flex justify-center items-center text-white border-[4px] border-[#f9f9f9] -mt-8 shadow-lg cursor-pointer transition-transform active:scale-95 hover:bg-[#7a1f7a]"
+          className="bg-[#0F7A6B] w-14 h-14 min-w-[56px] rounded-full flex justify-center items-center text-white border-[4px] border-[#f9f9f9] -mt-8 shadow-lg cursor-pointer transition-transform active:scale-95 hover:bg-[#0C695C]"
           title="নতুন যোগ করুন"
           onClick={onOpenAdd}
         >
@@ -480,7 +538,7 @@ export default function HomeScreen({
         </div>
         <div
           className="flex flex-col items-center text-xs text-gray-400 cursor-pointer gap-1 px-4 py-1 rounded-xl hover:bg-gray-100 transition-colors"
-          onClick={onOpenSettings}
+          onClick={() => setShowSettingsModal(true)}
         >
           <Settings className="w-6 h-6" />
           <span className="font-medium">সেটিংস</span>
@@ -501,7 +559,7 @@ export default function HomeScreen({
               <h3 className="text-lg font-bold">তালিকা ফিল্টার করুন</h3>
               <div className="flex items-center gap-3">
                 <div
-                  className="cursor-pointer text-[#8c258d] font-semibold text-sm flex items-center gap-1"
+                  className="cursor-pointer text-[#0F7A6B] font-semibold text-sm flex items-center gap-1"
                   onClick={() => {
                     setFilter("all");
                     setSort("new");
@@ -525,7 +583,7 @@ export default function HomeScreen({
                   value="all"
                   checked={filter === "all"}
                   onChange={() => setFilter("all")}
-                  className="accent-[#8c258d]"
+                  className="accent-[#0F7A6B]"
                 />{" "}
                 সব
               </label>
@@ -536,7 +594,7 @@ export default function HomeScreen({
                   value="customer"
                   checked={filter === "customer"}
                   onChange={() => setFilter("customer")}
-                  className="accent-[#8c258d]"
+                  className="accent-[#0F7A6B]"
                 />{" "}
                 কাস্টমার (বাকি পাবো)
               </label>
@@ -547,7 +605,7 @@ export default function HomeScreen({
                   value="supplier"
                   checked={filter === "supplier"}
                   onChange={() => setFilter("supplier")}
-                  className="accent-[#8c258d]"
+                  className="accent-[#0F7A6B]"
                 />{" "}
                 সাপ্লায়ার (বাকি দিবো)
               </label>
@@ -563,7 +621,7 @@ export default function HomeScreen({
                   value="new"
                   checked={sort === "new"}
                   onChange={() => setSort("new")}
-                  className="accent-[#8c258d]"
+                  className="accent-[#0F7A6B]"
                 />{" "}
                 নতুন লেনদেন আগে
               </label>
@@ -574,7 +632,7 @@ export default function HomeScreen({
                   value="old"
                   checked={sort === "old"}
                   onChange={() => setSort("old")}
-                  className="accent-[#8c258d]"
+                  className="accent-[#0F7A6B]"
                 />{" "}
                 পুরাতন লেনদেন আগে
               </label>
@@ -585,7 +643,7 @@ export default function HomeScreen({
                   value="low"
                   checked={sort === "low"}
                   onChange={() => setSort("low")}
-                  className="accent-[#8c258d]"
+                  className="accent-[#0F7A6B]"
                 />{" "}
                 কম বাকি আগে
               </label>
@@ -596,10 +654,47 @@ export default function HomeScreen({
                   value="high"
                   checked={sort === "high"}
                   onChange={() => setSort("high")}
-                  className="accent-[#8c258d]"
+                  className="accent-[#0F7A6B]"
                 />{" "}
                 বেশি বাকি আগে
               </label>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Settings Modal */}
+      {showSettingsModal && (
+        <div
+          className="absolute inset-0 bg-black/50 z-[1000] flex flex-col justify-end"
+          onClick={() => setShowSettingsModal(false)}
+        >
+          <div
+            className="bg-white rounded-t-2xl p-5 pb-8 w-full animate-in slide-in-from-bottom-full duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-6 pb-2.5 border-b border-gray-100">
+              <h3 className="text-lg font-bold">সেটিংস</h3>
+              <button onClick={() => setShowSettingsModal(false)}>
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+            
+            <div className="flex flex-col gap-3">
+              <button
+                className="w-full text-left px-4 py-3.5 text-base text-[#e11b22] font-bold flex items-center gap-3 rounded-xl hover:bg-red-50 active:bg-red-100 transition-colors border border-red-100"
+                onClick={() => {
+                  setShowSettingsModal(false);
+                  onOpenSettings();
+                }}
+              >
+                <LogOut className="w-5 h-5" /> লগ আউট (Log Out)
+              </button>
+            </div>
+
+            <div className="mt-8 text-center text-gray-400 text-xs font-medium space-y-1">
+              <p>ভার্সন ১.২ (Version 1.2)</p>
+              <p>ডেভলপার: Mohammad Nijam</p>
             </div>
           </div>
         </div>

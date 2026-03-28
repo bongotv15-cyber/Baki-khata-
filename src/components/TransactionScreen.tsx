@@ -63,12 +63,6 @@ export default function TransactionScreen({
         ? prevBal + gaveNum - gotNum
         : prevBal + gotNum - gaveNum;
 
-    let newType = customer.type;
-    if (netBalance < 0) {
-      newType = customer.type === "customer" ? "supplier" : "customer";
-      netBalance = Math.abs(netBalance);
-    }
-
     const newTransaction: Transaction = {
       id: generateUUID(),
       desc: desc.trim() || "লেনদেন",
@@ -77,7 +71,7 @@ export default function TransactionScreen({
       gave: gaveNum,
       got: gotNum,
       balance: netBalance,
-      type: newType,
+      type: customer.type,
     };
 
     const updatedTransactions = [newTransaction, ...(customer.transactions || [])];
@@ -86,7 +80,7 @@ export default function TransactionScreen({
     const updatedCustomer: Customer = {
       ...customer,
       amount: netBalance,
-      type: newType,
+      type: customer.type,
       updatedAt: Date.now(),
       transactions: updatedTransactions,
     };
@@ -99,7 +93,7 @@ export default function TransactionScreen({
       className="flex flex-col h-full w-full bg-[#f9f9f9] relative"
       onClick={() => setShowMenu(false)}
     >
-      <div className="flex items-center justify-between px-4 py-5 font-semibold bg-[#8c258d] text-white shadow-sm shrink-0">
+      <div className="flex items-center justify-between px-4 py-5 font-semibold bg-[#0F7A6B] text-white shadow-sm shrink-0">
         <div className="flex items-center">
           <span className="text-2xl mr-4 cursor-pointer flex items-center" onClick={onBack}>
             <ArrowLeft className="w-6 h-6" />
@@ -152,18 +146,24 @@ export default function TransactionScreen({
 
       <div className="flex-1 px-4 py-5 overflow-y-auto">
         <div className="text-center mb-6 text-base text-gray-600 font-semibold">
-          <span>{customer.type === "customer" ? "পাবো / বাকি:" : "দিবো / ডিউ:"}</span>
+          <span>
+            {customer.type === "customer"
+              ? (customer.amount || 0) >= 0 ? "পাবো / বাকি:" : "জমা / এডভান্স:"
+              : (customer.amount || 0) >= 0 ? "দিবো / ডিউ:" : "জমা / এডভান্স:"}
+          </span>
           <span
             className={`text-[26px] font-bold ml-1.5 ${
-              customer.type === "customer" ? "text-[#8c258d]" : "text-[#e11b22]"
+              customer.type === "customer"
+                ? (customer.amount || 0) >= 0 ? "text-[#0F7A6B]" : "text-[#198754]"
+                : (customer.amount || 0) >= 0 ? "text-[#e11b22]" : "text-[#0F7A6B]"
             }`}
           >
-            ৳ {formatAmountBng(customer.amount || 0)}
+            ৳ {formatAmountBng(Math.abs(customer.amount || 0))}
           </span>
         </div>
 
         <div className="flex gap-2.5 mb-4">
-          <div className="flex-1 bg-white rounded-xl px-4 py-3 border border-gray-200 flex items-center focus-within:border-[#8c258d] transition-colors">
+          <div className="flex-1 bg-white rounded-xl px-4 py-3 border border-gray-200 flex items-center focus-within:border-[#0F7A6B] transition-colors">
             <span className="text-base text-gray-600 mr-2 font-bold">৳</span>
             <input
               type="number"
@@ -173,7 +173,7 @@ export default function TransactionScreen({
               className="border-none outline-none text-lg w-full font-semibold text-gray-800 bg-transparent"
             />
           </div>
-          <div className="flex-1 bg-white rounded-xl px-4 py-3 border border-gray-200 flex items-center focus-within:border-[#8c258d] transition-colors">
+          <div className="flex-1 bg-white rounded-xl px-4 py-3 border border-gray-200 flex items-center focus-within:border-[#0F7A6B] transition-colors">
             <span className="text-base text-gray-600 mr-2 font-bold">৳</span>
             <input
               type="number"
@@ -185,7 +185,7 @@ export default function TransactionScreen({
           </div>
         </div>
 
-        <div className="bg-white rounded-xl p-4 mb-4 border border-gray-200 focus-within:border-[#8c258d] transition-colors">
+        <div className="bg-white rounded-xl p-4 mb-4 border border-gray-200 focus-within:border-[#0F7A6B] transition-colors">
           <input
             type="text"
             placeholder="বিবরণ লিখুন (ঐচ্ছিক)"
@@ -218,7 +218,7 @@ export default function TransactionScreen({
       </div>
 
       <button
-        className="w-full bg-[#8c258d] text-white border-none p-4 text-lg font-bold cursor-pointer active:bg-[#6a1a6a] transition-colors shrink-0"
+        className="w-full bg-[#0F7A6B] text-white border-none p-4 text-lg font-bold cursor-pointer active:bg-[#0A5C50] transition-colors shrink-0"
         onClick={handleSubmit}
       >
         নিশ্চিত করুন

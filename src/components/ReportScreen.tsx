@@ -35,7 +35,7 @@ export default function ReportScreen({
     // Sort oldest first
     const sorted = [...transactions].reverse();
     let currentAmount = 0;
-    let currentType: "customer" | "supplier" = "customer";
+    let currentType = customer.type;
 
     const updatedTxs = sorted.map((tx) => {
       let netBalance =
@@ -43,14 +43,7 @@ export default function ReportScreen({
           ? currentAmount + tx.gave - tx.got
           : currentAmount + tx.got - tx.gave;
 
-      let newType = currentType;
-      if (netBalance < 0) {
-        newType = currentType === "customer" ? "supplier" : "customer";
-        netBalance = Math.abs(netBalance);
-      }
-
       currentAmount = netBalance;
-      currentType = newType;
 
       return {
         ...tx,
@@ -128,14 +121,15 @@ export default function ReportScreen({
     
     let trs = "";
     (customer.transactions || []).forEach((r) => {
-      const typeLabel = r.type === "customer" ? "পাবো " : "দিবো ";
-      const typeColor = r.type === "customer" ? "color:#e11b22;" : "color:#198754;";
+      const isNegative = r.balance < 0;
+      const typeLabel = isNegative ? "জমা " : (r.type === "customer" ? "পাবো " : "দিবো ");
+      const typeColor = isNegative ? "color:#0F7A6B;" : (r.type === "customer" ? "color:#e11b22;" : "color:#198754;");
       trs += `<tr>
         <td style="padding:12px; border:1px solid #ddd;">
           <div style="font-size:14px; color:#555;">${r.desc}</div>
           <div style="font-weight:bold; font-size:14px;">${r.date}</div>
           <div style="font-size:12px; color:#888;">${r.time}</div>
-          <div style="font-size:12px; margin-top:4px; font-weight:bold; ${typeColor}">${typeLabel}${formatAmountBng(r.balance)}</div>
+          <div style="font-size:12px; margin-top:4px; font-weight:bold; ${typeColor}">${typeLabel}${formatAmountBng(Math.abs(r.balance))}</div>
         </td>
         <td style="padding:12px; border:1px solid #ddd; text-align:center; color:#e11b22; font-weight:bold;">${r.gave > 0 ? formatAmountBng(r.gave) : ""}</td>
         <td style="padding:12px; border:1px solid #ddd; text-align:center; color:#198754; font-weight:bold;">${r.got > 0 ? formatAmountBng(r.got) : ""}</td>
@@ -144,7 +138,7 @@ export default function ReportScreen({
 
     const now = new Date();
     div.innerHTML = `
-      <h2 style="text-align:center; color:#8c258d; margin-bottom:5px; font-size: 28px;">লেনদেন রিপোর্ট</h2>
+      <h2 style="text-align:center; color:#0F7A6B; margin-bottom:5px; font-size: 28px;">লেনদেন রিপোর্ট</h2>
       <h4 style="text-align:center; margin-bottom:10px; color:#333; font-size: 20px;">কাস্টমার: ${customer.name}</h4>
       <p style="text-align:center; font-size:16px; margin-bottom:20px; color:#777;">মোবাইল: ${customer.phone || '-'} | তারিখ: ${formatAmountBng(now.getDate())}-${formatAmountBng(now.getMonth() + 1)}-${formatAmountBng(now.getFullYear())}</p>
       <table style="width:100%; border-collapse:collapse; font-size:16px;">
@@ -203,7 +197,7 @@ export default function ReportScreen({
           <div className="text-2xl cursor-pointer text-gray-800 mr-3" onClick={onBack}>
             <ArrowLeft className="w-6 h-6" />
           </div>
-          <div className="w-10 h-10 bg-[#8c258d] text-white rounded-full flex items-center justify-center font-bold text-base mr-3">
+          <div className="w-10 h-10 bg-[#0F7A6B] text-white rounded-full flex items-center justify-center font-bold text-base mr-3">
             {customer.name.charAt(0)}
           </div>
           <div className="flex flex-col">
@@ -212,17 +206,21 @@ export default function ReportScreen({
             </span>
             <span
               className={`font-semibold text-[13px] mt-0.5 leading-tight ${
-                customer.type === "customer" ? "text-[#e11b22]" : "text-[#198754]"
+                (customer.amount || 0) >= 0
+                  ? customer.type === "customer" ? "text-[#e11b22]" : "text-[#198754]"
+                  : "text-[#0F7A6B]"
               }`}
             >
-              {customer.type === "customer" ? "পাবো " : "দিবো "}৳{" "}
-              {formatAmountBng(customer.amount || 0)}
+              {(customer.amount || 0) >= 0
+                ? customer.type === "customer" ? "পাবো " : "দিবো "
+                : "জমা "}৳{" "}
+              {formatAmountBng(Math.abs(customer.amount || 0))}
             </span>
           </div>
         </div>
         <button
           onClick={handleDownloadPDF}
-          className="bg-gray-100 w-10 h-10 rounded-xl flex justify-center items-center text-[#8c258d] cursor-pointer transition-colors border border-gray-200 shrink-0"
+          className="bg-gray-100 w-10 h-10 rounded-xl flex justify-center items-center text-[#0F7A6B] cursor-pointer transition-colors border border-gray-200 shrink-0"
           title="পিডিএফ ডাউনলোড"
         >
           <Download className="w-5 h-5" />
@@ -266,11 +264,15 @@ export default function ReportScreen({
                     <div className="text-[11px] text-gray-400 mt-0.5">{r.time}</div>
                     <div
                       className={`text-[11px] px-2 py-0.5 rounded-full inline-block mt-2 font-semibold bg-gray-100 ${
-                        r.type === "customer" ? "text-[#e11b22]" : "text-[#198754]"
+                        r.balance >= 0
+                          ? r.type === "customer" ? "text-[#e11b22]" : "text-[#198754]"
+                          : "text-[#0F7A6B]"
                       }`}
                     >
-                      {r.type === "customer" ? "পাবো " : "দিবো "}
-                      {formatAmountBng(r.balance)}
+                      {r.balance >= 0
+                        ? r.type === "customer" ? "পাবো " : "দিবো "
+                        : "জমা "}
+                      {formatAmountBng(Math.abs(r.balance))}
                     </div>
                   </td>
                   <td className="py-4 px-2.5 align-top w-[27.5%] bg-red-50/30 text-[#e11b22] text-center font-bold text-[15px]">
@@ -372,7 +374,7 @@ export default function ReportScreen({
       {/* Edit Modal */}
       {showEditModal && (
         <div className="absolute inset-0 bg-white z-[1000] flex flex-col animate-in slide-in-from-bottom-full duration-300">
-          <header className="flex items-center px-5 py-4 border-b border-gray-100 bg-[#8c258d] text-white shrink-0">
+          <header className="flex items-center px-5 py-4 border-b border-gray-100 bg-[#0F7A6B] text-white shrink-0">
             <div className="text-2xl cursor-pointer mr-3" onClick={() => setShowEditModal(false)}>
               <ArrowLeft className="w-6 h-6" />
             </div>
@@ -380,7 +382,7 @@ export default function ReportScreen({
           </header>
           <div className="flex-1 p-5 overflow-y-auto">
             <div className="flex gap-3 mb-4">
-              <div className="flex-1 bg-white rounded-xl px-4 py-3 border border-gray-200 flex items-center focus-within:border-[#8c258d] transition-colors">
+              <div className="flex-1 bg-white rounded-xl px-4 py-3 border border-gray-200 flex items-center focus-within:border-[#0F7A6B] transition-colors">
                 <span className="text-base text-gray-600 mr-2 font-bold">৳</span>
                 <input
                   type="number"
@@ -390,7 +392,7 @@ export default function ReportScreen({
                   className="border-none outline-none text-lg w-full font-semibold text-gray-800 bg-transparent"
                 />
               </div>
-              <div className="flex-1 bg-white rounded-xl px-4 py-3 border border-gray-200 flex items-center focus-within:border-[#8c258d] transition-colors">
+              <div className="flex-1 bg-white rounded-xl px-4 py-3 border border-gray-200 flex items-center focus-within:border-[#0F7A6B] transition-colors">
                 <span className="text-base text-gray-600 mr-2 font-bold">৳</span>
                 <input
                   type="number"
@@ -401,7 +403,7 @@ export default function ReportScreen({
                 />
               </div>
             </div>
-            <div className="bg-white rounded-xl p-4 mb-4 border border-gray-200 focus-within:border-[#8c258d] transition-colors">
+            <div className="bg-white rounded-xl p-4 mb-4 border border-gray-200 focus-within:border-[#0F7A6B] transition-colors">
               <input
                 type="text"
                 placeholder="বিবরণ লিখুন (ঐচ্ছিক)"
@@ -416,11 +418,11 @@ export default function ReportScreen({
                 type="date"
                 value={editDate}
                 onChange={(e) => setEditDate(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none text-gray-700 text-base focus:border-[#8c258d]"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none text-gray-700 text-base focus:border-[#0F7A6B]"
               />
             </div>
             <button
-              className="w-full bg-[#8c258d] text-white border-none p-4 rounded-xl text-lg font-bold cursor-pointer active:bg-[#6a1a6a] transition-colors"
+              className="w-full bg-[#0F7A6B] text-white border-none p-4 rounded-xl text-lg font-bold cursor-pointer active:bg-[#0A5C50] transition-colors"
               onClick={handleEditSave}
             >
               সেভ করুন

@@ -56,7 +56,7 @@ export default function ShareScreen({
 
   return (
     <div className="flex flex-col h-full w-full bg-[#f9f9f9] relative">
-      <div className="flex items-center justify-between px-4 py-5 font-semibold bg-[#8c258d] text-white shadow-sm shrink-0">
+      <div className="flex items-center justify-between px-4 py-5 font-semibold bg-[#0F7A6B] text-white shadow-sm shrink-0">
         <span className="text-lg font-bold">
           {mode === "transaction" ? "লেনদেন সফল" : "তাগাদা পাঠান"}
         </span>

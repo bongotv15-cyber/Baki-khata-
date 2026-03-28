@@ -5,15 +5,15 @@
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f3f4f6",
-  "theme_color": "#8c258d",
+  "theme_color": "#0F7A6B",
   "icons": [
     {
-      "src": "https://api.iconify.design/lucide:book-open.svg?color=%238c258d",
+      "src": "https://api.iconify.design/lucide:book-open.svg?color=%230F7A6B",
       "sizes": "192x192",
       "type": "image/svg+xml"
     },
     {
-      "src": "https://api.iconify.design/lucide:book-open.svg?color=%238c258d",
+      "src": "https://api.iconify.design/lucide:book-open.svg?color=%230F7A6B",
       "sizes": "512x512",
       "type": "image/svg+xml"
     }

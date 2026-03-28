@@ -127,8 +127,8 @@ export default function App() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-white">
-        <RefreshCw className="w-10 h-10 text-[#8c258d] animate-spin mb-4" />
-        <h3 className="text-[#8c258d] font-bold text-lg">ডেটা সিঙ্ক হচ্ছে...</h3>
+        <RefreshCw className="w-10 h-10 text-[#0F7A6B] animate-spin mb-4" />
+        <h3 className="text-[#0F7A6B] font-bold text-lg">ডেটা সিঙ্ক হচ্ছে...</h3>
         <p className="text-gray-500 text-sm mt-1">দয়া করে অপেক্ষা করুন</p>
       </div>
     );
