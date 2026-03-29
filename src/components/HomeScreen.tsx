@@ -18,16 +18,20 @@ import {
   RefreshCw,
   ChevronRight,
   LogOut,
+  CloudOff,
+  CloudCheck,
 } from "lucide-react";
 import { Customer } from "../types";
 import { formatAmountBng } from "../lib/utils";
 import { toast } from "sonner";
+import { SyncManager } from "../lib/sync";
 
 interface HomeScreenProps {
   storeName: string;
   syncStatus: string;
   syncMsg: string;
   customers: Customer[];
+  syncEngine: SyncManager | null;
   onOpenAdd: () => void;
   onOpenTransaction: (id: string) => void;
   onOpenSettings: () => void;
@@ -75,6 +79,7 @@ export default function HomeScreen({
   syncStatus,
   syncMsg,
   customers,
+  syncEngine,
   onOpenAdd,
   onOpenTransaction,
   onOpenSettings,
@@ -83,9 +88,16 @@ export default function HomeScreen({
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "customer" | "supplier">("all");
   const [sort, setSort] = useState<"new" | "old" | "low" | "high">("new");
-  const [hideUI, setHideUI] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showOfflineModal, setShowOfflineModal] = useState(false);
+  const [syncQueue, setSyncQueue] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (syncEngine) {
+      syncEngine.appDB.getAll("sync_queue").then(setSyncQueue);
+    }
+  }, [syncStatus, syncEngine, showOfflineModal]);
 
   const [displayList, setDisplayList] = useState<Customer[]>([]);
   const [renderCount, setRenderCount] = useState(50);
@@ -121,8 +133,8 @@ export default function HomeScreen({
     list.sort((a, b) => {
       if (sort === "new") return (b.updatedAt || 0) - (a.updatedAt || 0);
       if (sort === "old") return (a.updatedAt || 0) - (b.updatedAt || 0);
-      if (sort === "high") return (b.amount || 0) - (a.amount || 0);
-      if (sort === "low") return (a.amount || 0) - (b.amount || 0);
+      if (sort === "high") return Math.abs(b.amount || 0) - Math.abs(a.amount || 0);
+      if (sort === "low") return Math.abs(a.amount || 0) - Math.abs(b.amount || 0);
       return 0;
     });
 
@@ -153,7 +165,6 @@ export default function HomeScreen({
 
   const handleClearSearch = () => {
     setSearch("");
-    setHideUI(false);
   };
 
   const handleDownloadPDF = async () => {
@@ -233,48 +244,34 @@ export default function HomeScreen({
   };
 
   const getSyncStatusUI = () => {
-    if (syncStatus === "syncing") {
-      return (
-        <div
-          className="text-xs bg-orange-400/40 text-white px-2 py-1 rounded-full flex items-center gap-1 cursor-pointer transition-all"
-          onClick={onSyncNow}
-        >
-          <RefreshCw className="w-3 h-3 animate-spin" /> Syncing...
-        </div>
-      );
-    } else if (syncStatus === "offline") {
-      return (
-        <div className="text-xs bg-gray-500/80 text-white px-2 py-1 rounded-full flex items-center gap-1 cursor-pointer transition-all">
-          <AlertTriangle className="w-3 h-3" /> Offline
-        </div>
-      );
-    } else if (syncStatus === "manual_retry" || syncStatus === "error") {
-      return (
-        <div
-          className="text-xs bg-red-600/80 text-white px-2 py-1 rounded-full flex items-center gap-1 cursor-pointer transition-all"
-          onClick={onOpenSettings}
-        >
-          <AlertTriangle className="w-3 h-3" /> {syncStatus === "error" ? "Failed" : `Retry (${syncMsg})`}
-        </div>
-      );
-    }
+    const hasPending = syncQueue.length > 0;
+    
     return (
       <div
-        className="text-xs bg-black/20 text-white px-2 py-1 rounded-full flex items-center gap-1 cursor-pointer transition-all"
-        onClick={onSyncNow}
+        className="relative cursor-pointer p-1.5 rounded-full hover:bg-black/10 transition-colors"
+        onClick={() => setShowOfflineModal(true)}
+        title="অফলাইন ডাটা"
       >
-        <Check className="w-3 h-3" /> Synced
+        {syncStatus === "syncing" ? (
+          <RefreshCw className="w-6 h-6 animate-spin" />
+        ) : hasPending ? (
+          <CloudOff className="w-6 h-6" />
+        ) : (
+          <CloudCheck className="w-6 h-6" />
+        )}
+        
+        {hasPending && (
+          <div className="absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-[9px] font-bold flex items-center justify-center rounded-full border border-[#0F7A6B]">
+            {syncQueue.length}
+          </div>
+        )}
       </div>
     );
   };
 
   return (
     <div className="flex flex-col h-full w-full bg-gray-100 overflow-hidden relative">
-      <header
-        className={`bg-[#0F7A6B] text-white px-4 pt-5 pb-9 shrink-0 transition-all duration-300 ${
-          hideUI ? "pb-9" : ""
-        }`}
-      >
+      <header className="bg-[#0F7A6B] text-white px-4 pt-5 pb-9 shrink-0 transition-all duration-300">
         <div className="flex items-center justify-between mb-0 transition-all duration-300">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <div className="w-12 h-12 min-w-[48px] bg-gradient-to-br from-white to-teal-100 text-[#0F7A6B] rounded-full border-2 border-white/90 shadow-md flex justify-center items-center">
@@ -302,11 +299,7 @@ export default function HomeScreen({
       <div
         className={`relative -mt-5 bg-white rounded-t-3xl px-4 pt-6 flex-1 flex flex-col overflow-hidden z-10 transition-all duration-300`}
       >
-        <div
-          className={`shrink-0 transition-all duration-500 ease-in-out overflow-hidden ${
-            hideUI ? "max-h-0 opacity-0 mb-0" : "max-h-[350px] opacity-100 mb-4"
-          }`}
-        >
+        <div className="shrink-0 transition-all duration-500 ease-in-out overflow-hidden max-h-[350px] opacity-100 mb-4">
           <div className="grid grid-cols-4 gap-x-1 gap-y-4 pb-4 mb-4 border-b border-gray-100">
             <div
               className="flex flex-col items-center text-gray-700 cursor-pointer active:scale-95 transition-transform"
@@ -390,16 +383,11 @@ export default function HomeScreen({
               type="text"
               placeholder="নাম বা নম্বর দিয়ে খুঁজুন..."
               value={search}
-              onFocus={() => setHideUI(true)}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full p-2.5 border border-gray-200 rounded-xl text-sm outline-none transition-colors focus:border-[#0F7A6B] focus:bg-white bg-gray-50"
             />
           </div>
-          <div
-            className={`flex gap-2.5 transition-all duration-500 ease-in-out items-center ${
-              hideUI ? "max-w-0 opacity-0 overflow-hidden" : "max-w-[120px] opacity-100"
-            }`}
-          >
+          <div className="flex gap-2.5 transition-all duration-500 ease-in-out items-center max-w-[120px] opacity-100">
             <button
               onClick={() => setShowFilterModal(true)}
               className="bg-gray-100 w-10 h-10 rounded-xl flex justify-center items-center text-[#0F7A6B] cursor-pointer transition-colors border border-gray-200 shrink-0"
@@ -415,18 +403,16 @@ export default function HomeScreen({
               <Download className="w-5 h-5" />
             </button>
           </div>
-          <div
-            className={`transition-all duration-500 ease-in-out flex ${
-              hideUI ? "max-w-[40px] opacity-100" : "max-w-0 opacity-0 overflow-hidden"
-            }`}
-          >
-            <button
-              onClick={handleClearSearch}
-              className="flex text-gray-600 cursor-pointer w-10 h-10 items-center justify-center shrink-0 transition-colors"
-            >
-              <X className="w-6 h-6" />
-            </button>
-          </div>
+          {search && (
+            <div className="transition-all duration-500 ease-in-out flex max-w-[40px] opacity-100">
+              <button
+                onClick={handleClearSearch}
+                className="flex text-gray-600 cursor-pointer w-10 h-10 items-center justify-center shrink-0 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-2.5 mb-4 px-1 shrink-0 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
@@ -436,7 +422,7 @@ export default function HomeScreen({
               filter === "all" ? "bg-gray-800 text-white border-gray-800" : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
             }`}
           >
-            সব ({formatAmountBng(totalCount).split(".")[0]})
+            ডিফল্ট ({formatAmountBng(totalCount).split(".")[0]})
           </button>
           <button
             onClick={() => setFilter("customer")}
@@ -458,7 +444,10 @@ export default function HomeScreen({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto -mx-4 px-4 pb-5" id="customerList">
+        <div 
+          className="flex-1 overflow-y-auto -mx-4 px-4 pb-5" 
+          id="customerList"
+        >
           <div className="flex flex-col">
             {displayList.slice(0, renderCount).map((c) => {
               const daysAgo = Math.floor((Date.now() - c.updatedAt) / (1000 * 60 * 60 * 24));
@@ -518,7 +507,7 @@ export default function HomeScreen({
         </div>
       </div>
 
-      <div className={`bg-white justify-around py-3 border-t border-gray-200 items-center relative z-[100] shrink-0 shadow-[0_-4px_20px_rgba(0,0,0,0.04)] rounded-t-2xl ${hideUI ? "hidden" : "flex"}`}>
+      <div className="bg-white justify-around py-3 border-t border-gray-200 items-center relative z-[100] shrink-0 shadow-[0_-4px_20px_rgba(0,0,0,0.04)] rounded-t-2xl flex">
         <div
           className="flex flex-col items-center text-xs text-[#0F7A6B] cursor-pointer gap-1 px-4 py-1 rounded-xl hover:bg-teal-50 transition-colors"
           onClick={() => {
@@ -574,7 +563,7 @@ export default function HomeScreen({
                 </button>
               </div>
             </div>
-            <div className="font-bold mb-2 text-sm">ধরণ অনুযায়ী:</div>
+            <div className="font-bold mb-2 text-sm">ধরণ (Type):</div>
             <div className="mb-4 space-y-2">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -585,7 +574,7 @@ export default function HomeScreen({
                   onChange={() => setFilter("all")}
                   className="accent-[#0F7A6B]"
                 />{" "}
-                সব
+                ডিফল্ট
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -596,7 +585,7 @@ export default function HomeScreen({
                   onChange={() => setFilter("customer")}
                   className="accent-[#0F7A6B]"
                 />{" "}
-                কাস্টমার (বাকি পাবো)
+                কাস্টমার
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -607,35 +596,13 @@ export default function HomeScreen({
                   onChange={() => setFilter("supplier")}
                   className="accent-[#0F7A6B]"
                 />{" "}
-                সাপ্লায়ার (বাকি দিবো)
+                সাপ্লায়ার
               </label>
             </div>
             <div className="font-bold mb-2 text-sm">
-              বাকির পরিমাণ ও সময় অনুযায়ী:
+              সর্ট (Sort):
             </div>
             <div className="space-y-2">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="sort"
-                  value="new"
-                  checked={sort === "new"}
-                  onChange={() => setSort("new")}
-                  className="accent-[#0F7A6B]"
-                />{" "}
-                নতুন লেনদেন আগে
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="sort"
-                  value="old"
-                  checked={sort === "old"}
-                  onChange={() => setSort("old")}
-                  className="accent-[#0F7A6B]"
-                />{" "}
-                পুরাতন লেনদেন আগে
-              </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="radio"
@@ -645,7 +612,7 @@ export default function HomeScreen({
                   onChange={() => setSort("low")}
                   className="accent-[#0F7A6B]"
                 />{" "}
-                কম বাকি আগে
+                কম বাকি
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -656,7 +623,29 @@ export default function HomeScreen({
                   onChange={() => setSort("high")}
                   className="accent-[#0F7A6B]"
                 />{" "}
-                বেশি বাকি আগে
+                বেশি বাকি
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="sort"
+                  value="old"
+                  checked={sort === "old"}
+                  onChange={() => setSort("old")}
+                  className="accent-[#0F7A6B]"
+                />{" "}
+                পুরাতন বাকি
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="sort"
+                  value="new"
+                  checked={sort === "new"}
+                  onChange={() => setSort("new")}
+                  className="accent-[#0F7A6B]"
+                />{" "}
+                নতুন বাকি
               </label>
             </div>
           </div>
@@ -695,6 +684,79 @@ export default function HomeScreen({
             <div className="mt-8 text-center text-gray-400 text-xs font-medium space-y-1">
               <p>ভার্সন ১.২ (Version 1.2)</p>
               <p>ডেভলপার: Mohammad Nijam</p>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Offline Data Modal */}
+      {showOfflineModal && (
+        <div
+          className="absolute inset-0 bg-black/50 z-[1000] flex flex-col justify-end"
+          onClick={() => setShowOfflineModal(false)}
+        >
+          <div
+            className="bg-white rounded-t-2xl p-5 pb-8 w-full max-h-[80vh] flex flex-col animate-in slide-in-from-bottom-full duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-4 pb-2.5 border-b border-gray-100 shrink-0">
+              <h3 className="text-lg font-bold flex items-center gap-2">
+                <CloudOff className="w-5 h-5 text-gray-600" /> অফলাইন ডাটা
+              </h3>
+              <button onClick={() => setShowOfflineModal(false)}>
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto mb-4">
+              {syncQueue.length === 0 ? (
+                <div className="text-center py-10 text-gray-500">
+                  <Check className="w-12 h-12 mx-auto text-green-500 mb-2 opacity-50" />
+                  <p>সকল ডাটা সার্ভারে সেভ করা আছে।</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-600 mb-2">
+                    নিচের ডাটাগুলো এখনো সার্ভারে আপলোড হয়নি। ইন্টারনেট সংযোগ পেলে স্বয়ংক্রিয়ভাবে আপলোড হবে।
+                  </p>
+                  {syncQueue.map((item, idx) => (
+                    <div key={item.queueId || idx} className="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                      <div className="flex justify-between items-start mb-1">
+                        <span className="font-bold text-sm text-gray-800">
+                          {item.payload?.name || "অজানা নাম"}
+                        </span>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                          item.action === "DELETE" ? "bg-red-100 text-red-700" : "bg-teal-100 text-teal-700"
+                        }`}>
+                          {item.action === "DELETE" ? "ডিলিট" : "আপডেট"}
+                        </span>
+                      </div>
+                      <div className="text-xs text-gray-500 flex justify-between">
+                        <span>{item.payload?.type === "supplier" ? "সাপ্লায়ার" : "কাস্টমার"}</span>
+                        {item.payload?.amount !== undefined && (
+                          <span className="font-semibold text-gray-700">৳ {formatAmountBng(Math.abs(item.payload.amount))}</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="shrink-0 pt-2">
+              <button
+                className="w-full bg-[#0F7A6B] text-white font-bold py-3.5 rounded-xl active:scale-[0.98] transition-all flex justify-center items-center gap-2 disabled:opacity-50"
+                onClick={() => {
+                  onSyncNow();
+                  if (syncQueue.length === 0) setShowOfflineModal(false);
+                }}
+                disabled={syncStatus === "syncing" || syncQueue.length === 0}
+              >
+                {syncStatus === "syncing" ? (
+                  <><RefreshCw className="w-5 h-5 animate-spin" /> সিঙ্ক হচ্ছে...</>
+                ) : (
+                  <><CloudCheck className="w-5 h-5" /> এখনই সিঙ্ক করুন</>
+                )}
+              </button>
             </div>
           </div>
         </div>

@@ -145,6 +145,7 @@ export default function App() {
             syncStatus={syncStatus}
             syncMsg={syncMsg}
             customers={customers}
+            syncEngine={syncEngine}
             onOpenAdd={() => {
               setActiveCustomer(null);
               setScreen("add");
