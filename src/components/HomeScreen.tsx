@@ -43,8 +43,20 @@ const bngDigits: Record<string, string> = {
   "5": "৫", "6": "৬", "7": "৭", "8": "৮", "9": "৯",
 };
 
-const formatDaysBng = (days: number) => {
-  return days.toString().replace(/[0-9]/g, (w) => bngDigits[w] || w);
+const formatRelativeTimeBng = (timestamp: number) => {
+  const now = Date.now();
+  const diff = now - timestamp;
+  const seconds = Math.floor(diff / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  const toBng = (n: number) => n.toString().replace(/[0-9]/g, (w) => bngDigits[w] || w);
+
+  if (seconds < 60) return `${toBng(seconds)} সে আগে`;
+  if (minutes < 60) return `${toBng(minutes)} মি আগে`;
+  if (hours < 24) return `${toBng(hours)} ঘন্টা আগে`;
+  return `${toBng(days)} দিন আগে`;
 };
 
 const getInitials = (name: string) => {
@@ -270,7 +282,7 @@ export default function HomeScreen({
   };
 
   return (
-    <div className="flex flex-col h-full w-full bg-gray-100 overflow-hidden relative">
+    <div className="flex flex-col h-full w-full bg-gray-100 overflow-hidden relative select-none">
       <header className="bg-[#0F7A6B] text-white px-4 pt-5 pb-9 shrink-0 transition-all duration-300">
         <div className="flex items-center justify-between mb-0 transition-all duration-300">
           <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -281,8 +293,8 @@ export default function HomeScreen({
               <h3 className="text-xl font-extrabold tracking-wide drop-shadow-md whitespace-nowrap overflow-hidden text-ellipsis flex items-center gap-1.5">
                 {storeName || "নিজাম ষ্টোর"}
               </h3>
-              <p className="text-[10px] font-semibold text-teal-200/90 tracking-widest mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
-                ডিজিটাল হিসাব
+              <p className="text-[9px] font-semibold text-white tracking-widest mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
+                ডিজিটাল বাকির হিসাব
               </p>
             </div>
           </div>
@@ -362,7 +374,7 @@ export default function HomeScreen({
                 {formatAmountBng(Math.abs(totalCustomerBalance))}
               </div>
               <div className="text-[11px] text-gray-500 font-semibold">
-                {totalCustomerBalance >= 0 ? "মোট কাস্টমার (পাবো)" : "মোট কাস্টমার (দিবো)"}
+                {totalCustomerBalance >= 0 ? "মোট পাবো" : "মোট দিবো"}
               </div>
             </div>
             <div className="flex-1 min-w-0 text-center p-2 break-words">
@@ -370,7 +382,7 @@ export default function HomeScreen({
                 {formatAmountBng(Math.abs(totalSupplierBalance))}
               </div>
               <div className="text-[11px] text-gray-500 font-semibold">
-                {totalSupplierBalance >= 0 ? "মোট সাপ্লায়ার (দিবো)" : "মোট সাপ্লায়ার (পাবো)"}
+                {totalSupplierBalance >= 0 ? "মোট দিবো" : "মোট পাবো"}
               </div>
             </div>
           </div>
@@ -415,33 +427,13 @@ export default function HomeScreen({
           )}
         </div>
 
-        <div className="flex items-center gap-2.5 mb-4 px-1 shrink-0 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-          <button
-            onClick={() => setFilter("all")}
-            className={`px-3 py-1.5 rounded-lg text-[12px] font-bold whitespace-nowrap transition-colors border ${
-              filter === "all" ? "bg-gray-800 text-white border-gray-800" : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
-            }`}
-          >
-            ডিফল্ট ({formatAmountBng(totalCount).split(".")[0]})
-          </button>
-          <button
-            onClick={() => setFilter("customer")}
-            className={`px-3 py-1.5 rounded-lg text-[12px] font-bold whitespace-nowrap transition-colors border flex items-center gap-1.5 ${
-              filter === "customer" ? "bg-[#0F7A6B] text-white border-[#0F7A6B]" : "bg-white text-[#0F7A6B] border-gray-200 hover:bg-teal-50"
-            }`}
-          >
-            <div className={`w-1.5 h-1.5 rounded-full ${filter === "customer" ? "bg-white" : "bg-[#0F7A6B]"}`}></div>
+        <div className="flex items-center gap-4 mb-4 px-1 shrink-0 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <div className="text-[10px] font-bold text-gray-800 whitespace-nowrap flex items-center gap-1.5">
             কাস্টমার: {formatAmountBng(customerCount).split(".")[0]}
-          </button>
-          <button
-            onClick={() => setFilter("supplier")}
-            className={`px-3 py-1.5 rounded-lg text-[12px] font-bold whitespace-nowrap transition-colors border flex items-center gap-1.5 ${
-              filter === "supplier" ? "bg-[#e11b22] text-white border-[#e11b22]" : "bg-white text-[#e11b22] border-gray-200 hover:bg-red-50"
-            }`}
-          >
-            <div className={`w-1.5 h-1.5 rounded-full ${filter === "supplier" ? "bg-white" : "bg-[#e11b22]"}`}></div>
+          </div>
+          <div className="text-[10px] font-bold text-gray-800 whitespace-nowrap flex items-center gap-1.5">
             সাপ্লায়ার: {formatAmountBng(supplierCount).split(".")[0]}
-          </button>
+          </div>
         </div>
 
         <div 
@@ -468,11 +460,11 @@ export default function HomeScreen({
                         {c.name}
                       </h4>
                       <p className="text-[12px] text-gray-500 mt-0.5 flex items-center gap-1.5">
-                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${c.type === "customer" ? "bg-teal-50 text-[#0F7A6B]" : "bg-red-50 text-[#e11b22]"}`}>
+                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${c.type === "customer" ? "bg-gray-100 text-black" : "bg-gray-100 text-black"}`}>
                           {c.type === "customer" ? "কাস্টমার" : "সাপ্লায়ার"}
                         </span>
                         <span>•</span>
-                        <span>{formatDaysBng(daysAgo)} দিন</span>
+                        <span>{formatRelativeTimeBng(c.updatedAt || 0)}</span>
                       </p>
                     </div>
                   </div>

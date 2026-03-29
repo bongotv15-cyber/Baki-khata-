@@ -126,10 +126,15 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-white">
-        <RefreshCw className="w-10 h-10 text-[#0F7A6B] animate-spin mb-4" />
-        <h3 className="text-[#0F7A6B] font-bold text-lg">ডেটা সিঙ্ক হচ্ছে...</h3>
-        <p className="text-gray-500 text-sm mt-1">দয়া করে অপেক্ষা করুন</p>
+      <div className="flex flex-col items-center justify-center h-screen bg-[#0F7A6B]">
+        <div className="relative">
+          <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin"></div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-white font-bold text-2xl">৳</span>
+          </div>
+        </div>
+        <h3 className="text-white font-bold text-lg mt-6 tracking-wide">ডেটা সিঙ্ক হচ্ছে...</h3>
+        <p className="text-teal-100 text-sm mt-1">দয়া করে অপেক্ষা করুন</p>
       </div>
     );
   }
