@@ -119,9 +119,7 @@ export default function App() {
   }, []);
 
   const handleLogout = async () => {
-    if (window.confirm("লগআউট করতে চান?")) {
-      await signOut(auth);
-    }
+    await signOut(auth);
   };
 
   if (loading) {
@@ -163,9 +161,7 @@ export default function App() {
               }
             }}
             onOpenSettings={() => {
-              if (window.confirm("লগআউট করতে চান?")) {
-                handleLogout();
-              }
+              handleLogout();
             }}
             onSyncNow={() => syncEngine?.processQueue()}
           />

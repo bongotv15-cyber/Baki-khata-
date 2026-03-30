@@ -99,7 +99,7 @@ export default function TransactionScreen({
             <ArrowLeft className="w-6 h-6" />
           </span>
           <div className="ml-2.5 flex flex-col">
-            <span className="text-lg leading-tight">{customer.name}</span>
+            <span className="text-lg leading-tight font-medium">{customer.name}</span>
             <span className="text-[13px] font-normal leading-tight opacity-90">
               {customer.phone}
             </span>

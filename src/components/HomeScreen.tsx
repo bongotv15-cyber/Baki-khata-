@@ -367,7 +367,7 @@ export default function HomeScreen({
             </div>
           </div>
 
-          <div className="flex justify-between gap-4 mb-5 px-1 relative">
+          <div className="flex justify-between gap-4 mb-1 px-1 relative">
             <div className="absolute left-1/2 top-2 bottom-2 w-px bg-gray-200 -translate-x-1/2"></div>
             <div className="flex-1 min-w-0 text-center p-2 break-words">
               <div className="text-xl font-bold text-[#0F7A6B] mb-1">
@@ -456,10 +456,10 @@ export default function HomeScreen({
                       {getInitials(c.name)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-[17px] font-bold text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis">
+                      <h4 className="text-[15px] font-medium text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis">
                         {c.name}
                       </h4>
-                      <p className="text-[12px] text-gray-500 mt-0.5 flex items-center gap-1.5">
+                      <p className="text-[12px] text-gray-500 mt-0.5 flex items-center gap-1.5 font-normal">
                         <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${c.type === "customer" ? "bg-gray-100 text-black" : "bg-gray-100 text-black"}`}>
                           {c.type === "customer" ? "কাস্টমার" : "সাপ্লায়ার"}
                         </span>
