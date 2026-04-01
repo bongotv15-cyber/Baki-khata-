@@ -22,7 +22,7 @@ import {
   CloudCheck,
 } from "lucide-react";
 import { Customer } from "../types";
-import { formatAmountBng } from "../lib/utils";
+import { formatAmountBng, toBngDigits } from "../lib/utils";
 import { toast } from "sonner";
 import { SyncManager } from "../lib/sync";
 
@@ -190,7 +190,7 @@ export default function HomeScreen({
     div.style.width = "800px"; // Fixed width for consistent rendering
     div.style.backgroundColor = "white";
     div.style.padding = "40px";
-    div.style.fontFamily = "sans-serif";
+    div.style.fontFamily = "'Inter', 'Noto Sans Bengali', sans-serif";
     
     let trs = "";
     const now = new Date();
@@ -209,7 +209,7 @@ export default function HomeScreen({
     div.innerHTML = `
       <h2 style="text-align:center; color:#0F7A6B; margin-bottom:5px; font-size: 28px;">${storeName || "নিজাম ষ্টোর"}</h2>
       <h4 style="text-align:center; margin-bottom:10px; color:#555; font-size: 20px;">ডিজিটাল হিসাব - সম্পূর্ণ তালিকা</h4>
-      <p style="text-align:center; font-size:16px; margin-bottom:20px; color:#777;">তারিখ: ${formatAmountBng(now.getDate())}-${formatAmountBng(now.getMonth() + 1)}-${formatAmountBng(now.getFullYear())}</p>
+      <p style="text-align:center; font-size:16px; margin-bottom:20px; color:#777;">তারিখ: ${toBngDigits(now.getDate())}-${toBngDigits(now.getMonth() + 1)}-${toBngDigits(now.getFullYear())}</p>
       <table style="width:100%; border-collapse:collapse; font-size:18px;">
         <tr style="background-color:#f4f4f4;">
           <th style="padding:14px; text-align:left; border:1px solid #ddd;">নাম</th>
@@ -309,10 +309,10 @@ export default function HomeScreen({
       </header>
 
       <div
-        className={`relative -mt-5 bg-white rounded-t-3xl px-4 pt-6 flex-1 flex flex-col overflow-hidden z-10 transition-all duration-300`}
+        className={`relative -mt-5 bg-white rounded-t-3xl px-4 pt-4 flex-1 flex flex-col overflow-hidden z-10 transition-all duration-300`}
       >
-        <div className="shrink-0 transition-all duration-500 ease-in-out overflow-hidden max-h-[350px] opacity-100 mb-4">
-          <div className="grid grid-cols-4 gap-x-1 gap-y-4 pb-4 mb-4 border-b border-gray-100">
+        <div className="shrink-0 transition-all duration-500 ease-in-out overflow-hidden max-h-[350px] opacity-100 mb-1">
+          <div className="grid grid-cols-4 gap-x-1 gap-y-2 pb-2 mb-2 border-b border-gray-100">
             <div
               className="flex flex-col items-center text-gray-700 cursor-pointer active:scale-95 transition-transform"
               onClick={onOpenAdd}
@@ -429,10 +429,10 @@ export default function HomeScreen({
 
         <div className="flex items-center gap-4 mb-4 px-1 shrink-0 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           <div className="text-[10px] font-bold text-gray-800 whitespace-nowrap flex items-center gap-1.5">
-            কাস্টমার: {formatAmountBng(customerCount).split(".")[0]}
+            কাস্টমার: {toBngDigits(customerCount)}
           </div>
           <div className="text-[10px] font-bold text-gray-800 whitespace-nowrap flex items-center gap-1.5">
-            সাপ্লায়ার: {formatAmountBng(supplierCount).split(".")[0]}
+            সাপ্লায়ার: {toBngDigits(supplierCount)}
           </div>
         </div>
 

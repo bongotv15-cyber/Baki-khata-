@@ -41,6 +41,10 @@ const bngDigits: Record<string, string> = {
   "9": "৯",
 };
 
+export function toBngDigits(n: number | string) {
+  return n.toString().replace(/[0-9]/g, (w) => bngDigits[w] || w);
+}
+
 export function formatAmountBng(amt: number) {
   return amt
     .toLocaleString("en-US", {
@@ -54,11 +58,11 @@ export function formatDateBng(dateString: string) {
   if (!dateString) return "";
   let parts = dateString.split("-");
   return (
-    parts[2].replace(/[0-9]/g, (w) => bngDigits[w] || w) +
+    toBngDigits(parts[2]) +
     " " +
     bngMonths[parseInt(parts[1]) - 1] +
     ", " +
-    parts[0].replace(/[0-9]/g, (w) => bngDigits[w] || w)
+    toBngDigits(parts[0])
   );
 }
 
@@ -69,11 +73,9 @@ export function formatTimeBng(d: Date) {
   h = h % 12;
   h = h ? h : 12;
   return (
-    (h < 10 ? "0" + h : h) +
+    toBngDigits(h < 10 ? "0" + h : h) +
     ":" +
-    (m < 10 ? "0" + m : m)
-      .toString()
-      .replace(/[0-9]/g, (w) => bngDigits[w] || w) +
+    toBngDigits(m < 10 ? "0" + m : m) +
     " " +
     ampm
   );

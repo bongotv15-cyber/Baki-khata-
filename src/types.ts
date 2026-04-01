@@ -3,6 +3,7 @@ export interface Transaction {
   desc: string;
   date: string;
   time: string;
+  timestamp: number;
   gave: number;
   got: number;
   balance: number;
@@ -18,4 +19,5 @@ export interface Customer {
   amount: number;
   transactions: Transaction[];
   updatedAt: number;
+  deleted?: boolean;
 }

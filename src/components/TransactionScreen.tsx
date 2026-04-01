@@ -68,6 +68,7 @@ export default function TransactionScreen({
       desc: desc.trim() || "লেনদেন",
       date: formatDateBng(date),
       time: formatTimeBng(new Date()),
+      timestamp: new Date(date).getTime(),
       gave: gaveNum,
       got: gotNum,
       balance: netBalance,

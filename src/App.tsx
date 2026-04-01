@@ -83,12 +83,17 @@ export default function App() {
             const snap = await getDocs(
               collection(db, "users", currentUser.uid, "customers")
             );
+            let maxUpdatedAt = 0;
             for (let docSnap of snap.docs) {
               let d = docSnap.data();
               d.id = docSnap.id;
+              if (d.updatedAt > maxUpdatedAt) maxUpdatedAt = d.updatedAt;
               await newDB.put("customers", d);
             }
             await newDB.put("meta", { key: "initialSync", done: true });
+            if (maxUpdatedAt > 0) {
+              await newDB.put("meta", { key: "lastSyncTime", value: maxUpdatedAt });
+            }
           } catch (e) {
             console.error(e);
           }

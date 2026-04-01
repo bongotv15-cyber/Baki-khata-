@@ -3,7 +3,7 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { ArrowLeft, Bell, Edit, Trash2, AlertTriangle, X, Download } from "lucide-react";
 import { Customer, Transaction } from "../types";
-import { formatAmountBng, formatDateBng, formatTimeBng } from "../lib/utils";
+import { formatAmountBng, formatDateBng, toBngDigits } from "../lib/utils";
 import { toast } from "sonner";
 
 interface ReportScreenProps {
@@ -32,8 +32,8 @@ export default function ReportScreen({
   const tGot = (customer.transactions || []).reduce((acc, r) => acc + r.got, 0);
 
   const recalculateBalances = (transactions: Transaction[]): Customer => {
-    // Sort oldest first
-    const sorted = [...transactions].reverse();
+    // Sort oldest first by timestamp
+    const sorted = [...transactions].sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
     let currentAmount = 0;
     let currentType = customer.type;
 
@@ -52,7 +52,7 @@ export default function ReportScreen({
       };
     });
 
-    // Reverse back to newest first
+    // Reverse back to newest first for display
     updatedTxs.reverse();
 
     return {
@@ -96,6 +96,7 @@ export default function ReportScreen({
           got: gotNum,
           desc: editDesc.trim() || "লেনদেন",
           date: editDate ? formatDateBng(editDate) : t.date,
+          timestamp: editDate ? new Date(editDate).getTime() : (t.timestamp || Date.now()),
         };
       }
       return t;
@@ -117,7 +118,7 @@ export default function ReportScreen({
     div.style.width = "800px";
     div.style.backgroundColor = "white";
     div.style.padding = "40px";
-    div.style.fontFamily = "sans-serif";
+    div.style.fontFamily = "'Inter', 'Noto Sans Bengali', sans-serif";
     
     let trs = "";
     (customer.transactions || []).forEach((r) => {
@@ -140,7 +141,7 @@ export default function ReportScreen({
     div.innerHTML = `
       <h2 style="text-align:center; color:#0F7A6B; margin-bottom:5px; font-size: 28px;">লেনদেন রিপোর্ট</h2>
       <h4 style="text-align:center; margin-bottom:10px; color:#333; font-size: 20px;">কাস্টমার: ${customer.name}</h4>
-      <p style="text-align:center; font-size:16px; margin-bottom:20px; color:#777;">মোবাইল: ${customer.phone || '-'} | তারিখ: ${formatAmountBng(now.getDate())}-${formatAmountBng(now.getMonth() + 1)}-${formatAmountBng(now.getFullYear())}</p>
+      <p style="text-align:center; font-size:16px; margin-bottom:20px; color:#777;">মোবাইল: ${customer.phone || '-'} | তারিখ: ${toBngDigits(now.getDate())}-${toBngDigits(now.getMonth() + 1)}-${toBngDigits(now.getFullYear())}</p>
       <table style="width:100%; border-collapse:collapse; font-size:16px;">
         <tr style="background-color:#f4f4f4;">
           <th style="padding:14px; text-align:left; border:1px solid #ddd; width:45%;">লেনদেনের বিবরণ</th>

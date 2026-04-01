@@ -9,6 +9,9 @@ import {
   getDocs,
   setDoc,
   deleteDoc,
+  query,
+  where,
+  orderBy,
 } from "firebase/firestore";
 
 export class SyncManager {
@@ -41,7 +44,12 @@ export class SyncManager {
   async mutate(action: "SET" | "DELETE", docId: string | null, dataPayload?: any) {
     const timestamp = Date.now();
     const id = docId || generateUUID();
-    const localData = { id, ...dataPayload, updatedAt: timestamp };
+    const localData = { 
+      id, 
+      ...dataPayload, 
+      updatedAt: timestamp,
+      deleted: action === "DELETE"
+    };
 
     if (action === "DELETE") {
       await this.appDB.delete("customers", id);
@@ -51,7 +59,7 @@ export class SyncManager {
 
     await this.appDB.put("sync_queue", {
       queueId: generateUUID(),
-      action,
+      action: "SET", // Always SET because we use soft delete (deleted: true)
       docId: id,
       payload: localData,
       retry: 0,
@@ -163,7 +171,71 @@ export class SyncManager {
     this.processQueue();
   }
 
-  listenRemote() {
+  async listenRemote() {
+    const userRef = collection(firestoreDB, "users", this.userId, "customers");
+    
+    // Get last sync time from local DB
+    const meta = await this.appDB.get("meta", "lastSyncTime");
+    const lastSync = meta ? meta.value : 0;
+
+    // Only listen for documents updated after the last sync
+    const q = query(
+      userRef,
+      where("updatedAt", ">", lastSync),
+      orderBy("updatedAt", "asc")
+    );
+
+    onSnapshot(
+      q,
+      async (snapshot) => {
+        let changed = false;
+        let latestTimestamp = lastSync;
+
+        for (const change of snapshot.docChanges()) {
+          const rData = change.doc.data();
+          const rId = change.doc.id;
+          if (!rData.id) rData.id = rId;
+
+          if (rData.updatedAt > latestTimestamp) {
+            latestTimestamp = rData.updatedAt;
+          }
+
+          if (change.type === "added" || change.type === "modified") {
+            if (rData.deleted) {
+              await this.appDB.delete("customers", rId);
+              changed = true;
+            } else {
+              const local = await this.appDB.get("customers", rId);
+              if (!local || !local.updatedAt || rData.updatedAt > local.updatedAt) {
+                await this.appDB.put("customers", rData);
+                changed = true;
+              }
+            }
+          } else if (change.type === "removed") {
+            // This handles hard deletes if they happen, though we prefer soft deletes
+            await this.appDB.delete("customers", rId);
+            changed = true;
+          }
+        }
+
+        if (latestTimestamp > lastSync) {
+          await this.appDB.put("meta", { key: "lastSyncTime", value: latestTimestamp });
+        }
+
+        if (changed) this.onDataChange();
+      },
+      (err) => {
+        console.error("Listener Error", err);
+        // If query fails (e.g. index missing), fallback to full sync
+        if (err.message.includes("index")) {
+          console.warn("Firestore Index missing. Falling back to full sync.");
+          this.listenRemoteFull();
+        }
+      }
+    );
+  }
+
+  private listenRemoteFull() {
     const userRef = collection(firestoreDB, "users", this.userId, "customers");
     onSnapshot(
       userRef,
@@ -175,10 +247,15 @@ export class SyncManager {
           if (!rData.id) rData.id = rId;
 
           if (change.type === "added" || change.type === "modified") {
-            const local = await this.appDB.get("customers", rId);
-            if (!local || !local.updatedAt || rData.updatedAt > local.updatedAt) {
-              await this.appDB.put("customers", rData);
+            if (rData.deleted) {
+              await this.appDB.delete("customers", rId);
               changed = true;
+            } else {
+              const local = await this.appDB.get("customers", rId);
+              if (!local || !local.updatedAt || rData.updatedAt > local.updatedAt) {
+                await this.appDB.put("customers", rData);
+                changed = true;
+              }
             }
           } else if (change.type === "removed") {
             await this.appDB.delete("customers", rId);
@@ -187,7 +264,7 @@ export class SyncManager {
         }
         if (changed) this.onDataChange();
       },
-      (err) => console.error("Listener Error", err)
+      (err) => console.error("Full Listener Error", err)
     );
   }
 
